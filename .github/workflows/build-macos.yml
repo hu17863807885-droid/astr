@@ -11,6 +11,10 @@ jobs:
   build-macos:
     runs-on: macos-latest
 
+    defaults:
+      run:
+        working-directory: mac_upload_to_github
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,31 +32,14 @@ jobs:
       - name: Validate Python sources
         run: |
           python -m py_compile oa_review_gui.py oa_review_launcher.py OA_Review_macos.spec
-          python - <<'PY'
-          import tkinter
-          from PIL import Image, ImageTk
-          print("tkinter ok")
-          print("pillow ok")
-          PY
+          python -c "import tkinter; from PIL import Image, ImageTk; print('tkinter ok'); print('pillow ok')"
 
       - name: Optional A1689 data smoke test
         run: |
           if [[ -f A1689/vis_table.csv && -d A1689/annotation_check_triplets ]]; then
-          python - <<'PY'
-          from pathlib import Path
-          from oa_review_gui import load_candidates
-
-          candidates = load_candidates(
-              Path("A1689/vis_table.csv"),
-              Path("A1689/annotation_check_triplets"),
-          )
-          print(f"candidate_count={len(candidates)}")
-          if not candidates:
-              raise SystemExit("No A1689 candidates were loaded")
-          print(f"first_patch={candidates[0].patch_id}")
-          PY
+            python -c "from pathlib import Path; from oa_review_gui import load_candidates; c=load_candidates(Path('A1689/vis_table.csv'), Path('A1689/annotation_check_triplets')); print(f'candidate_count={len(c)}'); assert c; print(f'first_patch={c[0].patch_id}')"
           else
-          echo "A1689 data not present; skipping data smoke test."
+            echo "A1689 data not present; skipping data smoke test."
           fi
 
       - name: Build macOS app
@@ -72,4 +59,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: OA_Review-macos-app
-          path: dist/OA_Review-macos-app.zip
+          path: mac_upload_to_github/dist/OA_Review-macos-app.zip
