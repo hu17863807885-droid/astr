@@ -1,0 +1,75 @@
+name: Build OA Review macOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-oa-review.txt
+
+      - name: Validate Python sources
+        run: |
+          python -m py_compile oa_review_gui.py oa_review_launcher.py OA_Review_macos.spec
+          python - <<'PY'
+          import tkinter
+          from PIL import Image, ImageTk
+          print("tkinter ok")
+          print("pillow ok")
+          PY
+
+      - name: Optional A1689 data smoke test
+        run: |
+          if [[ -f A1689/vis_table.csv && -d A1689/annotation_check_triplets ]]; then
+          python - <<'PY'
+          from pathlib import Path
+          from oa_review_gui import load_candidates
+
+          candidates = load_candidates(
+              Path("A1689/vis_table.csv"),
+              Path("A1689/annotation_check_triplets"),
+          )
+          print(f"candidate_count={len(candidates)}")
+          if not candidates:
+              raise SystemExit("No A1689 candidates were loaded")
+          print(f"first_patch={candidates[0].patch_id}")
+          PY
+          else
+          echo "A1689 data not present; skipping data smoke test."
+          fi
+
+      - name: Build macOS app
+        run: |
+          python -m PyInstaller --clean --noconfirm OA_Review_macos.spec
+
+      - name: Validate built app starts
+        run: |
+          dist/OA_Review.app/Contents/MacOS/OA_Review --help
+
+      - name: Package app
+        run: |
+          cd dist
+          zip -ry OA_Review-macos-app.zip OA_Review.app
+
+      - name: Upload app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OA_Review-macos-app
+          path: dist/OA_Review-macos-app.zip
