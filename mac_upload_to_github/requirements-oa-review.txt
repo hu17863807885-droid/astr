@@ -1,0 +1,5 @@
+Pillow>=10
+pyinstaller>=6
+
+# Only needed when the input catalog is FITS instead of CSV.
+# astropy>=6
