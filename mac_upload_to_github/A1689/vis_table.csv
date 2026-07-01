@@ -1,0 +1,4 @@
+﻿folder_id,object_id,patch_id,id,ra,dec,redshift,rms,catalogue
+./annotation_check_triplets/,1a_triplet.png,1a,1a,197.8602167,-1.33243056,,,
+./annotation_check_triplets/,1b_triplet.png,1b,1b,197.8595375,-1.33338611,,,
+./annotation_check_triplets/,1c_triplet.png,1c,1c,197.8740542,-1.35206389,,,
